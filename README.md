@@ -1,5 +1,12 @@
 # single_node_service
 
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-5.2.1-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![WebSocket](https://img.shields.io/badge/WebSocket-ws-2C3E50)](https://github.com/websockets/ws)
+[![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+[![Architecture](https://img.shields.io/badge/Architecture-Single%20Node-orange)](#system-architecture)
+
 실시간 커뮤니티 기능(게시글, 댓글, 친구, 1:1 채팅)을 단일 서버에 통합한 서비스입니다.  
 `Express + WebSocket + SQLite` 조합으로, 백엔드 1프로세스만 실행하면 프론트엔드까지 함께 서빙됩니다.
 
@@ -316,4 +323,3 @@ node src/server.js
 - `backend/src/modules/README.md`
 - `frontend/README.md`
 - `db/README.md`
-
