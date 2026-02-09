@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="/css/chat.css">
+    </head>
+    <body>
+        <main>
+            <h1>Chat with <span id="targetName"></span></h1>
+            <h2 id="myName"></h2>
+            <div id="chatbox"></div>
+            <input id="msgInput" placeholder="Type a message..." />
+            <button id="sendBtn">Send</button><br>
+            <button id="back" class="btn-ghost">Back</button>
+        </main>
+    </body>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) location.href = 'index.html';
+        
+        const myName = localStorage.getItem('name');
+        const params = new URLSearchParams(location.search);
+        const targetName = params.get('target');
+        
+        if (!targetName) {
+            alert('No target specified');
+            location.href = './main.html';
+        }
+
+        const myNameEl = document.getElementById('myName');
+        const targetNameEl = document.getElementById('targetName');
+        const chatbox = document.getElementById('chatbox');
+        const msgInput = document.getElementById('msgInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const backBtn = document.getElementById('back');
+
+        myNameEl.textContent = `You: ${myName}`;
+        targetNameEl.textContent = targetName;
+
+        // 메시지 렌더링
+        function renderMessage(msg) {
+            const div = document.createElement('div');
+            div.className = msg.from === myName ? 'div-item me' : 'div-item other';
+            
+            const nameSpan = document.createElement('div');
+            nameSpan.className = 'name';
+            nameSpan.textContent = msg.from;
+            
+            const textSpan = document.createElement('div');
+            textSpan.className = 'text';
+            textSpan.textContent = msg.text;
+            
+            const timeSpan = document.createElement('div');
+            timeSpan.className = 'time';
+            const date = new Date(msg.time);
+            timeSpan.textContent = date.toLocaleTimeString();
+            
+            div.appendChild(nameSpan);
+            div.appendChild(textSpan);
+            div.appendChild(timeSpan);
+            
+            chatbox.appendChild(div);
+            chatbox.scrollTop = chatbox.scrollHeight; // 스크롤을 맨 아래로
+        }
+
+        // 기존 메시지 로드
+        async function loadHistory() {
+            try {
+                const res = await fetch(`/chat/messages/${targetName}`, {
+                    headers: { authorization: `Bearer ${token}` }
+                });
+                
+                if (!res.ok) {
+                    console.error('Failed to load chat history');
+                    return;
+                }
+                
+                const { messages } = await res.json();
+                messages.forEach(renderMessage);
+                
+                // 메시지를 읽음 처리
+                await markAsRead();
+            } catch (err) {
+                console.error('Error loading history:', err);
+            }
+        }
+
+        // 메시지 읽음 처리
+        async function markAsRead() {
+            try {
+                await fetch(`/friend/read/${targetName}`, {
+                    method: 'POST',
+                    headers: { authorization: `Bearer ${token}` }
+                });
+                console.log('Messages marked as read');
+            } catch (err) {
+                console.error('Error marking as read:', err);
+            }
+        }
+
+        // WebSocket 연결
+        const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(`${protocol}://${location.host}/ws/chat?token=${encodeURIComponent(token)}`);
+        
+        ws.onopen = () => {
+            console.log('Chat WebSocket connected');
+        };
+
+        ws.onmessage =async (e) => {
+            const msg = JSON.parse(e.data);
+            console.log('Received message:', msg);
+            await markAsRead();
+            // 현재 채팅 상대와 관련된 메시지만 표시
+            if (msg.from === targetName || msg.to === targetName) {
+                renderMessage(msg);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = (e) => {
+            if (e.code === 4001) {
+                localStorage.removeItem('token');
+                alert('session is expired. please log in again.');
+                location.href = '/index.html';
+            }
+        };
+
+        // 메시지 전송
+        function sendMessage() {
+            const text = msgInput.value.trim();
+            if (!text) {
+                alert('Please enter a message');
+                return;
+            }
+            
+            if (ws.readyState !== WebSocket.OPEN) {
+                alert('Connection not ready');
+                return;
+            }
+            
+            try {
+                ws.send(JSON.stringify({ targetName, text }));
+                msgInput.value = '';
+            } catch (err) {
+                console.error('Failed to send message:', err);
+                alert('Failed to send message');
+            }
+        }
+
+        sendBtn.onclick = sendMessage;
+        
+        msgInput.onkeypress = (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        };
+
+        backBtn.onclick = () => {
+            location.href = './friend.html';
+        };
+
+        // 페이지 로드 시 기존 대화 불러오기
+        loadHistory();
+    </script>
+</html>

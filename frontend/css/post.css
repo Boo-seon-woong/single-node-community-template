@@ -1,0 +1,67 @@
+@import url('/css/theme.css');
+
+body {
+  align-items: flex-start;
+}
+
+main {
+  margin-top: 24px;
+  padding: 36px;
+}
+
+h1 {
+  color: var(--text);
+}
+
+h2 {
+  text-align: left;
+}
+
+#info {
+  color: var(--accent-2);
+  cursor: pointer;
+  width: fit-content;
+}
+
+#info:hover {
+  color: var(--accent);
+}
+
+textarea {
+  min-height: 120px;
+  margin-top: 18px;
+}
+
+input {
+  width: min(520px, 100%);
+  margin: 8px 0;
+}
+
+button {
+  min-width: 150px;
+  margin: 12px 8px 0 0;
+}
+
+p {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  min-height: 160px;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+#cmtlist {
+  max-height: 260px;
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+#cmtlist .div-item {
+  font-weight: 600;
+  display: block;
+  margin: 0;
+}

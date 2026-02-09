@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="/css/newpost.css">
+    </head>
+    <body>
+        <main>
+            <h1>New Post</h1>
+            <input id="title" placeholder = 'title'><Br>
+            <textarea id="text" placeholder="text"></textarea><br>
+            <button id="post">Post</button>
+            <button id="back" class="btn-ghost">Back</button>
+        </main>
+    </body>
+    <script>
+        const token = localStorage.getItem('token');
+        if(!token) location.href = 'index.html';
+        const textEl = document.getElementById('text');
+        const titleEl = document.getElementById('title');
+        const name = localStorage.getItem('name');
+        const postBtn = document.getElementById('post');
+        const backBtn = document.getElementById('back');
+
+        async function req(path, data) {
+            const options = {
+                method: data ? 'POST' : 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            const res = await fetch(path, options);
+            return res;
+        }
+
+        //버튼
+        backBtn.onclick = () => {
+            location.href = './main.html'
+        }
+
+        //websockect
+        const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(`${protocol}://${location.host}/ws/post?token=${encodeURIComponent(token)}`);
+        ws.onmessage = (e) => {
+            const m = JSON.parse(e.data);
+            // 자기가 보낸 게시물인 경우에만 페이지 이동
+            if (m.name === name) {
+                location.href = './main.html';
+            }
+        };
+        ws.onclose = (e) => {
+            if (e.code === 4001) {
+                localStorage.removeItem('token');
+                alert('session is expired. please log in again.');
+                location.href = '/index.html';
+            }
+        };
+
+        postBtn.onclick = () => {
+        const title = titleEl.value;
+        const text = textEl.value;
+        if (!title.trim() || !text.trim()) {
+            alert('Please fill title and text');
+            return;
+        }
+
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ title, text }));
+            return;
+        }
+
+        // fallback to HTTP if ws not ready
+        fetch('/post/addpost', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ title, text })
+        })
+        .then(res => res.json())
+        .then(() => location.href = './main.html')
+        .catch(err => {
+            console.error('post failed:', err);
+            alert('post failed');
+        });
+        };
+
+    </script>
+</html>

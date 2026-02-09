@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="/css/main.css">
+        <title>Main</title>
+    </head>
+    <body>
+        <main>
+            <h1>Main</h1>
+            <h2 id="info"></h2>
+            <div id="postlist"></div>
+            <br>
+            <button id="newpost">New Post</button>
+            <button id="friends" class="btn-soft">Friends</button>
+            <button id="logout" class="btn-ghost">Logout</button>
+        </main>
+    </body>
+    <script>
+        const token = localStorage.getItem('token');
+        if(!token) location.href = 'index.html';
+        const name = localStorage.getItem('name');
+        const infoEl = document.getElementById('info');
+        const plEl = document.getElementById('postlist');
+        const npBtn = document.getElementById('newpost');
+        const friendsBtn = document.getElementById('friends');
+        const logoutBtn = document.getElementById('logout');
+
+        async function req(path, data) {
+            const options = {
+                method: data ? 'POST' : 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            const res = await fetch(path, options);
+            return res;
+        }
+
+        const postIndex = new Map();
+
+        function render(p, opts = {}) {
+            if (!p || !p.id) return;
+            if (postIndex.has(p.id)) return;
+
+            const div = document.createElement('div');
+            div.className = 'div-item post-card';
+            div.tabIndex = 0;
+            div.setAttribute('role', 'button');
+            div.style.cursor = 'pointer';
+
+            const left = document.createElement('div');
+            left.className = 'post-main';
+
+            const title = document.createElement('p');
+            title.className = 'post-title';
+            title.textContent = p.title || '(untitled)';
+
+            const meta = document.createElement('p');
+            meta.className = 'post-meta';
+            meta.textContent = `by ${p.name || 'unknown'}`;
+
+            left.appendChild(title);
+            left.appendChild(meta);
+            div.appendChild(left);
+
+            const goPost = () => {
+                location.href = `./post.html?id=${p.id}`;
+            };
+            div.onclick = goPost;
+            div.onkeydown = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    goPost();
+                }
+            };
+
+            if (opts.prepend) {
+                plEl.insertBefore(div, plEl.firstChild);
+            } else {
+                plEl.appendChild(div);
+            }
+
+            postIndex.set(p.id, div);
+        }
+
+        // 버튼들
+        npBtn.onclick = () => {
+            location.href = './newpost.html';
+        }
+
+        friendsBtn.onclick = () => {
+            location.href = './friend.html';
+        }
+
+        logoutBtn.onclick = () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('name');
+            localStorage.removeItem('email');
+            location.href = './index.html'
+        }
+
+        // 기존 게시물 로드
+        async function loadHistory() {
+            infoEl.textContent = `user : ${name}`
+            plEl.innerHTML = '';
+            postIndex.clear();
+            const res = await fetch('/post/getposts',{
+                headers : {
+                    authorization : `Bearer ${token}`
+                }
+            });
+            if(!res.ok) {
+                console.error('loadHistory failed', res.status);
+                return;
+            }
+            const data = await res.json();
+            data.posts.forEach(p => render(p, { prepend: false }));
+        }
+
+        loadHistory();
+
+        // websocket
+        const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(`${protocol}://${location.host}/ws/post?token=${encodeURIComponent(token)}`);
+        ws.onmessage = e => {
+            const m = JSON.parse(e.data);
+            render(m, { prepend: true });
+        };
+        ws.onclose = (e) => {
+            if (e.code === 4001) {
+                localStorage.removeItem('token');
+                alert('session is expired. please log in again.');
+                location.href = '/index.html';
+            }
+        };
+    </script>
+</html>

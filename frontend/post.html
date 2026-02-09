@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="/css/post.css">
+    </head>
+    <body>
+        <main>
+            <h1 id="title"></h1>
+            <h2 id="info"></h2>
+            <p id="text"></p><br><br>
+            <h2>comment</h2>
+            <div id="cmtlist"></div>
+            <textarea id="cmt" placeholder="enter the comment"></textarea>
+            <button id="cmtsend">Enter</button>
+            <button id="back" class="btn-ghost">Back</button>
+        </main>
+    </body>
+    <script>
+        const token = localStorage.getItem('token');
+        if(!token) location.href = 'index.html';
+        const textEl = document.getElementById('text');
+        const titleEl = document.getElementById('title');
+        const cmtEl = document.getElementById('cmt');
+        const name = localStorage.getItem('name');
+        const infoEl = document.getElementById('info');
+        const backBtn = document.getElementById('back');
+        const cmtlist = document.getElementById('cmtlist');
+        const cmtsendBtn = document.getElementById('cmtsend');
+
+        const params = new URLSearchParams(location.search);
+        const id = params.get('id');
+        
+        let postAuthor = ''; // 게시물 작성자 저장
+        
+        // 버튼
+        backBtn.onclick = () => {
+            location.href = './main.html'
+        }
+
+        function render(m) {
+            const div = document.createElement('div');
+            div.className='div-item';
+            div.textContent = `${m.name} : ${m.text}`;
+            cmtlist.appendChild(div);
+        }
+
+        async function req(path, data) {
+            const options = {
+                method: data ? 'POST' : 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            const res = await fetch(path, options);
+            return res;
+        }
+
+        async function loadPost() {
+            const res = await fetch('/post/getpost/'+id,{
+                headers : {authorization : `Bearer ${token}`}
+            });
+            const { post } = await res.json();
+            if (!post) {
+                alert('failed to load post');
+                return;
+            }
+
+            postAuthor = post.name;
+            titleEl.textContent = `< ${post.title} >`;
+            textEl.textContent = post.text;
+            infoEl.textContent = `writer:${post.name}`;
+            
+            // 닉네임 클릭 시 채팅으로 이동
+            infoEl.onclick = async () => {
+                if (postAuthor === name) {
+                    alert('자기 자신과는 채팅할 수 없습니다.');
+                    return;
+                }
+
+                try {
+                    await fetch(`/friend/add/${encodeURIComponent(postAuthor)}`, {
+                        method: 'POST',
+                        headers: {
+                            authorization: `Bearer ${token}`
+                        }
+                    });
+                    // 실패하든 성공하든 채팅 화면으로 이동
+                } catch (e) {
+                    console.warn('addFriend failed:', e);
+                }
+
+                location.href = `./chat.html?target=${encodeURIComponent(postAuthor)}`;
+            };
+        }
+        
+        async function loadCmt() {
+            const res = await fetch('/comment/getcomment/'+id,{
+                headers : {authorization : `Bearer ${token}`}
+            });
+            const {comments} = await res.json();
+            cmtlist.innerHTML = '';
+            comments.forEach(render);
+        }
+
+        loadPost()
+        loadCmt()
+
+        //websocket
+        const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(`${protocol}://${location.host}/ws/cmt?token=${encodeURIComponent(token)}`);
+        
+        ws.onopen = () => {
+            console.log('Comment WebSocket connected');
+        };
+
+        ws.onmessage = e => {
+            const m = JSON.parse(e.data);
+            console.log('Received comment:', m);
+            if (m.postId === id) {
+                render(m);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = (e) => {
+            if (e.code === 4001) {
+                localStorage.removeItem('token');
+                alert('session is expired. please log in again.');
+                location.href = '/index.html';
+            }
+        };
+
+        cmtsendBtn.onclick = () => {
+            const text = cmtEl.value;
+            if (!text.trim()) {
+                alert('Please enter a comment');
+                return;
+            }
+            try {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ id, text }));
+                    cmtEl.value = '';
+                } else {
+                    fetch(`/comment/addcomment/${encodeURIComponent(id)}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ text })
+                    })
+                    .then(res => res.json())
+                    .then(() => {
+                        cmtEl.value = '';
+                        loadCmt();
+                    })
+                    .catch(err => {
+                        console.error('Failed to send comment:', err);
+                        alert('Comment failed');
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to send comment:', err);
+                alert('Comment failed');
+            }
+        };
+    </script>
+</html>

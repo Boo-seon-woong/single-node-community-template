@@ -1,0 +1,33 @@
+@import url('/css/theme.css');
+
+body {
+  align-items: center;
+}
+
+main {
+  width: min(420px, 100%);
+  padding: 36px 32px;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 8px;
+}
+
+h2 {
+  margin-bottom: 28px;
+}
+
+input,
+button {
+  width: 100%;
+  margin: 10px 0;
+}
+
+button + button {
+  margin-top: 6px;
+}
+
+p {
+  margin-top: 18px;
+}

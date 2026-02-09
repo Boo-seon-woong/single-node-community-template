@@ -1,0 +1,86 @@
+@import url('/css/theme.css');
+
+body {
+  align-items: flex-start;
+}
+
+main {
+  margin-top: 24px;
+  padding: 32px;
+}
+
+h1, h2 {
+  text-align: left;
+}
+
+input {
+  width: calc(100% - 140px);
+  margin: 10px 0;
+}
+
+button {
+  min-width: 120px;
+  margin-left: 8px;
+}
+
+#chatbox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  height: min(420px, 55vh);
+  overflow-y: auto;
+  margin: 18px 0 10px;
+  background: rgba(10, 15, 20, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+}
+
+#chatbox .div-item {
+  max-width: 70%;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+#chatbox .div-item.me {
+  align-self: flex-end;
+  background: linear-gradient(135deg, rgba(255, 138, 61, 0.2), rgba(255, 138, 61, 0.05));
+  border-color: rgba(255, 138, 61, 0.35);
+}
+
+#chatbox .div-item.other {
+  align-self: flex-start;
+  background: rgba(59, 212, 177, 0.12);
+  border-color: rgba(59, 212, 177, 0.35);
+}
+
+#chatbox .div-item .name {
+  font-weight: 600;
+  font-size: 0.9em;
+  color: var(--muted);
+}
+
+#chatbox .div-item .text {
+  margin-top: 6px;
+  color: var(--text);
+}
+
+#chatbox .div-item .time {
+  font-size: 0.75em;
+  color: rgba(168, 182, 196, 0.7);
+  margin-top: 6px;
+}
+
+@media (max-width: 640px) {
+  input {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  button {
+    width: 100%;
+    margin-left: 0;
+  }
+}

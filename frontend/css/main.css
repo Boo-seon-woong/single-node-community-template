@@ -1,0 +1,85 @@
+@import url('/css/theme.css');
+
+body {
+  align-items: flex-start;
+}
+
+main {
+  margin-top: 24px;
+  padding: 36px;
+}
+
+h1, h2 {
+  text-align: left;
+}
+
+textarea {
+  min-height: 220px;
+  resize: vertical;
+}
+
+input {
+  width: min(520px, 100%);
+  margin: 8px 0;
+}
+
+button {
+  min-width: 160px;
+  margin: 10px 8px 0 0;
+}
+
+#postlist {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0 24px;
+}
+
+#postlist .div-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+#info {
+  color: var(--accent-2);
+  cursor: pointer;
+}
+
+#postlist .post-card {
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+#postlist .post-card:focus-visible {
+  outline: 2px solid rgba(59, 212, 177, 0.6);
+  outline-offset: 2px;
+}
+
+#postlist .post-main {
+  min-width: 0;
+}
+
+#postlist .post-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#postlist .post-meta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+#postlist .post-arrow {
+  flex: 0 0 auto;
+  color: var(--accent-2);
+  font-size: 18px;
+  font-weight: 700;
+}

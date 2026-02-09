@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auth</title>
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+<body>
+<main>
+  <h1>Boo Archive</h1>
+  <h2>- Login -</h2>
+
+  <input id="email" placeholder="email">
+  <input id="password" type="password" placeholder="password">
+
+  <button id="loginBtn">Login</button>
+  <button id="registerBtn" class="btn-ghost">Register</button>
+
+  <p id="msg" class="error"></p>
+</main>
+
+<script>
+const emailEl = document.getElementById('email');
+const pwEl = document.getElementById('password');
+const msgEl = document.getElementById('msg');
+const loginBtn = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
+
+async function req(path, data) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return res;
+}
+
+loginBtn.onclick = async () => {
+  msgEl.textContent = '';
+  const email = emailEl.value;
+  const password = pwEl.value;
+
+  const res = await req('/auth/login', { email, password });
+  const body = await res.json();
+
+  if (!res.ok) {
+    msgEl.textContent = body.error || 'login failed';
+    return;
+  }
+
+  localStorage.setItem('token', body.token);
+  localStorage.setItem('email', body.email);
+  localStorage.setItem('name', body.name);
+
+  location.href = '/main.html';
+};
+
+registerBtn.onclick = async () => {
+  location.href = 'register.html'
+};
+</script>
+</body>
+</html>

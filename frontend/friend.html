@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="/css/friend.css">
+    </head>
+    <body>
+        <main>
+            <h1>Friends & Messages</h1>
+            <h2 id="myName"></h2>
+            <div id="friendlist"></div>
+            <button id="back" class="btn-ghost">Back to Main</button><br><br>
+            <input id="friendname" placeholder="enter the new friend's name">
+            <button id="nfBtn">Enter</button>
+        </main>
+    </body>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) location.href = 'index.html';
+        
+        const myName = localStorage.getItem('name');
+        const myNameEl = document.getElementById('myName');
+        const friendlistEl = document.getElementById('friendlist');
+        const backBtn = document.getElementById('back');
+        const nfBtn = document.getElementById('nfBtn');
+
+        myNameEl.textContent = `Your friends, ${myName}`;
+
+        // 친구 목록 렌더링
+        function renderFriend(friend) {
+            const existingDiv = document.getElementById(`friend-${friend.name}`);
+            if (existingDiv) {
+                existingDiv.remove();
+            }
+
+            const div = document.createElement('div');
+            div.className = 'div-item';
+            div.id = `friend-${friend.name}`;
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.className = friend.unreadCount > 0 ? 'friend-name unread' : 'friend-name';
+            nameSpan.textContent = friend.name;
+            
+            div.appendChild(nameSpan);
+            
+            // 읽지 않은 메시지 배지
+            if (friend.unreadCount > 0) {
+                const badge = document.createElement('span');
+                badge.className = 'unread-badge';
+                badge.textContent = friend.unreadCount;
+                div.appendChild(badge);
+            }
+            
+            // 클릭 시 채팅방으로 이동
+            div.onclick = () => {
+                location.href = `./chat.html?target=${friend.name}`;
+            };
+            
+            friendlistEl.appendChild(div);
+        }
+
+        // 친구 목록 로드
+        async function loadFriends() {
+            try {
+                const res = await fetch('/friend/list', {
+                    headers: { authorization: `Bearer ${token}` }
+                });
+                
+                if (!res.ok) {
+                    console.error('Failed to load friends');
+                    return;
+                }
+                
+                const { friends } = await res.json();
+                
+                friendlistEl.innerHTML = '';
+                
+                if (friends.length === 0) {
+                    friendlistEl.innerHTML = '<p>No conversations yet. Start chatting with someone!</p>';
+                } else {
+                    friends.forEach(renderFriend);
+                }
+            } catch (err) {
+                console.error('Error loading friends:', err);
+            }
+        }
+        
+        nfBtn.onclick = async () => {
+            const target = document.getElementById('friendname').value.trim();
+            if(target === myName) {
+                alert('You cannot add yourself');
+                return;
+            }
+            try{
+                await fetch(`/friend/add/${encodeURIComponent(target)}`, {
+                method: 'POST',
+                headers: {
+                    authorization: `Bearer ${token}`
+                }
+            });
+            } catch (err) {
+                console.warn('addFriend failed:',err);
+            }
+            document.getElementById('friendname').value='';
+            await loadFriends();
+        }
+
+        // WebSocket 연결 (새 메시지 알림용)
+        const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(`${protocol}://${location.host}/ws/friend?token=${encodeURIComponent(token)}`);
+        
+        ws.onopen = () => {
+            console.log('Friend WebSocket connected');
+        };
+
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            console.log('Friend notification:', data);
+            
+            if (data.type === 'new_message') {
+                // 새 메시지 도착 시 친구 목록 새로고침
+                loadFriends();
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = (e) => {
+            if (e.code === 4001) {
+                localStorage.removeItem('token');
+                alert('session is expired. please log in again.');
+                location.href = '/index.html';
+            }
+        };
+
+        backBtn.onclick = () => {
+            location.href = './main.html';
+        };
+
+        // 페이지 로드 시 친구 목록 불러오기
+        loadFriends();
+    </script>
+</html>

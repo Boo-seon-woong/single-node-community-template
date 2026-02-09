@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Auth</title>
+  <link rel="stylesheet" href="/css/register.css">
+</head>
+<body>
+<main>
+  <h1>MyApp</h1>
+  <h2>Login / Register</h2>
+
+  <input id="email" placeholder="email">
+  <input id="name" placeholder="name (register only)">
+  <input id="password" type="password" placeholder="password">
+
+  <button id="registerBtn">Register</button>
+  <button id="BackBtn" class="btn-ghost">Back</button>
+
+  <p id="msg" class="error"></p>
+</main>
+
+<script>
+const emailEl = document.getElementById('email');
+const nameEl = document.getElementById('name');
+const pwEl = document.getElementById('password');
+const msgEl = document.getElementById('msg');
+const registerBtn = document.getElementById('registerBtn');
+const backBtn = document.getElementById('BackBtn');
+
+async function req(path, data) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return res;
+}
+
+
+registerBtn.onclick = async () => {
+  msgEl.textContent = '';
+  const email = emailEl.value;
+  const name = nameEl.value;
+  const password = pwEl.value;
+
+  const res = await req('/auth/register', { email, name, password });
+  const body = await res.json();
+
+  if (!res.ok) {
+    msgEl.textContent = body.error || 'register failed';
+    return;
+  }
+  alert('인증 메일을 확인하세요.');
+  location.href = '/index.html';
+};
+
+backBtn.onclick = () => {
+  location.href = '/index.html';
+};
+</script>
+</body>
+</html>

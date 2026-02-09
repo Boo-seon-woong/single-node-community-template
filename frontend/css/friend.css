@@ -1,0 +1,55 @@
+@import url('/css/theme.css');
+
+body {
+  align-items: flex-start;
+}
+
+main {
+  margin-top: 24px;
+  padding: 36px;
+}
+
+h1, h2 {
+  text-align: left;
+}
+
+input {
+  width: min(520px, 100%);
+  margin: 8px 0;
+}
+
+button {
+  min-width: 160px;
+  margin: 10px 8px 0 0;
+}
+
+#friendlist {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0 24px;
+}
+
+#friendlist .div-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.friend-name {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.friend-name.unread {
+  color: var(--accent);
+}
+
+.unread-badge {
+  background: rgba(255, 138, 61, 0.18);
+  border: 1px solid rgba(255, 138, 61, 0.45);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  margin-left: auto;
+}
